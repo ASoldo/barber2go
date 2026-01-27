@@ -1,0 +1,89 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Appointment Detail — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+  <div class="admin-header">
+    <div>
+      <h1>Appointment detail</h1>
+      <p class="muted">Review and update this appointment.</p>
+    </div>
+    <div class="admin-actions">
+      <a class="btn ghost" href="/admin/appointments">Back to list</a>
+    </div>
+  </div>
+
+  <div class="admin-grid">
+    <div class="card">
+      <h2>Client info</h2>
+      <div class="detail-grid">
+        <div>
+          <span class="label">Name</span>
+          <p>{{ appointment.client_name }}</p>
+        </div>
+        <div>
+          <span class="label">Phone</span>
+          <p>{{ appointment.client_phone }}</p>
+        </div>
+        <div>
+          <span class="label">Email</span>
+          {% if appointment.has_email %}
+          <p>{{ appointment.client_email }}</p>
+          {% else %}
+          <p class="muted">Not provided</p>
+          {% endif %}
+        </div>
+        <div>
+          <span class="label">Address</span>
+          <p>{{ appointment.address }}</p>
+        </div>
+        <div>
+          <span class="label">Service</span>
+          <p>{{ appointment.service }}</p>
+        </div>
+        <div>
+          <span class="label">Scheduled for</span>
+          <p>{{ appointment.scheduled_for }}</p>
+        </div>
+      </div>
+      {% if appointment.has_notes %}
+      <div class="notes">
+        <span class="label">Notes</span>
+        <p>{{ appointment.notes }}</p>
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="card">
+      <h2>Update appointment</h2>
+      <form class="form" method="post" action="/admin/appointments/{{ appointment.id }}">
+        <div class="field">
+          <label for="status">Status</label>
+          <select id="status" name="status">
+            {% for status in statuses %}
+            <option value="{{ status.value }}" {% if status.selected %}selected{% endif %}>{{ status.value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="barber_id">Assigned barber</label>
+          <select id="barber_id" name="barber_id">
+            <option value="">Unassigned</option>
+            {% for barber in barbers %}
+            <option value="{{ barber.id }}" {% if barber.selected %}selected{% endif %}>
+              {{ barber.display_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="scheduled_for">Reschedule (optional)</label>
+          <input id="scheduled_for" name="scheduled_for" type="datetime-local" value="{{ appointment.scheduled_for }}" />
+        </div>
+        <button type="submit" class="btn primary">Save changes</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

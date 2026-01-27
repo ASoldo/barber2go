@@ -1,0 +1,58 @@
+{% extends "admin_base.html" %}
+
+{% block title %}My Appointments — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+  <div class="admin-header">
+    <div>
+      <h1>My appointments</h1>
+      <p class="muted">Claim pending bookings or update your schedule.</p>
+    </div>
+    <div class="admin-actions">
+      <a class="btn ghost" href="/barber/dashboard">Back to dashboard</a>
+    </div>
+  </div>
+
+  <div class="stack">
+    {% for appointment in appointments %}
+    <div class="card appointment-card">
+      <div class="card-header">
+        <div>
+          <h3>{{ appointment.client_name }}</h3>
+          <p class="muted">{{ appointment.service }} · {{ appointment.scheduled_for }}</p>
+        </div>
+        <span class="status {{ appointment.status }}">{{ appointment.status }}</span>
+      </div>
+      <div class="card-body">
+        <p><strong>Address:</strong> {{ appointment.address }}</p>
+        <p><strong>Phone:</strong> {{ appointment.client_phone }}</p>
+        {% if appointment.has_email %}
+        <p><strong>Email:</strong> {{ appointment.client_email }}</p>
+        {% endif %}
+        {% if appointment.has_notes %}
+        <p><strong>Notes:</strong> {{ appointment.notes }}</p>
+        {% endif %}
+      </div>
+      <div class="card-actions">
+        <form method="post" action="/barber/appointments/{{ appointment.id }}/status">
+          <input type="hidden" name="status" value="accepted" />
+          <button class="btn primary" type="submit">Accept</button>
+        </form>
+        <form method="post" action="/barber/appointments/{{ appointment.id }}/status">
+          <input type="hidden" name="status" value="completed" />
+          <button class="btn light" type="submit">Complete</button>
+        </form>
+        <form method="post" action="/barber/appointments/{{ appointment.id }}/status">
+          <input type="hidden" name="status" value="declined" />
+          <button class="btn ghost" type="submit">Decline</button>
+        </form>
+      </div>
+    </div>
+    {% endfor %}
+    {% if appointments.is_empty() %}
+    <p class="muted">No appointments yet. Pending requests will appear here.</p>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

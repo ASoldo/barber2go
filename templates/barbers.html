@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+
+{% block title %}Barbers — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      <h1>Our barbers</h1>
+      <p>Verified professionals who bring the shop experience to your home.</p>
+    </div>
+    <div class="grid barbers" data-stagger>
+      {% for barber in barbers %}
+      <article class="barber-card">
+        <div class="avatar">{{ barber.initials }}</div>
+        <div>
+          <h4>{{ barber.display_name }}</h4>
+          <p class="muted">Available for home visits</p>
+        </div>
+      </article>
+      {% endfor %}
+      {% if barbers.is_empty() %}
+      <p class="muted">No barbers listed yet. Check back soon.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

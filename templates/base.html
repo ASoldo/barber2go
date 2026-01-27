@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Barber2Go{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/app.css" />
+  {% block head %}{% endblock %}
+</head>
+<body class="public-body">
+  <div class="bg-shape"></div>
+  <header class="site-header">
+    <div class="container nav-wrap">
+      <a class="logo" href="/">Barber2Go</a>
+      <nav class="nav">
+        <a href="/book">Book</a>
+        <a href="/barbers">Barbers</a>
+        <a href="/admin/dashboard">Admin</a>
+        <a class="cta" href="/book">Book now</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div>
+        <strong>Barber2Go</strong>
+        <p>Mobile-first appointments and clean scheduling for modern barbers.</p>
+      </div>
+      <div>
+        <p class="muted">Built for home visits, teams, and busy calendars.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

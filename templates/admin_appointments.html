@@ -1,0 +1,53 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Appointments — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+  <div class="admin-header">
+    <div>
+      <h1>Appointments</h1>
+      <p class="muted">Review, assign, and update appointment status.</p>
+    </div>
+    <div class="admin-actions">
+      <a class="btn ghost" href="/admin/dashboard">Back to dashboard</a>
+    </div>
+  </div>
+
+  <form class="filter" method="get" action="/admin/appointments">
+    <label for="status">Status</label>
+    <select id="status" name="status">
+      <option value="" {% if status_filter == "" %}selected{% endif %}>All</option>
+      <option value="pending" {% if status_filter == "pending" %}selected{% endif %}>Pending</option>
+      <option value="accepted" {% if status_filter == "accepted" %}selected{% endif %}>Accepted</option>
+      <option value="declined" {% if status_filter == "declined" %}selected{% endif %}>Declined</option>
+      <option value="completed" {% if status_filter == "completed" %}selected{% endif %}>Completed</option>
+    </select>
+    <button type="submit" class="btn light">Filter</button>
+  </form>
+
+  <div class="card">
+    <div class="table">
+      <div class="table-row header">
+        <span>Client</span>
+        <span>Service</span>
+        <span>Schedule</span>
+        <span>Barber</span>
+        <span>Status</span>
+      </div>
+      {% for appointment in appointments %}
+      <a class="table-row" href="/admin/appointments/{{ appointment.id }}">
+        <span>{{ appointment.client_name }}</span>
+        <span>{{ appointment.service }}</span>
+        <span>{{ appointment.scheduled_for }}</span>
+        <span>{{ appointment.barber_name }}</span>
+        <span class="status {{ appointment.status }}">{{ appointment.status }}</span>
+      </a>
+      {% endfor %}
+      {% if appointments.is_empty() %}
+      <p class="muted">No appointments match this filter.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

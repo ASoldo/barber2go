@@ -1,0 +1,75 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Barbers — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+  <div class="admin-header">
+    <div>
+      <h1>Barbers</h1>
+      <p class="muted">Manage your team and assign appointments.</p>
+    </div>
+    <div class="admin-actions">
+      <a class="btn ghost" href="/admin/dashboard">Back to dashboard</a>
+    </div>
+  </div>
+
+  {% if has_success %}
+  <div class="alert success">{{ success }}</div>
+  {% endif %}
+
+  {% if !errors.is_empty() %}
+  <div class="alert">
+    <ul>
+      {% for error in errors %}
+      <li>{{ error }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+  {% endif %}
+
+  <div class="admin-grid">
+    <div class="card">
+      <h2>Team roster</h2>
+      <div class="table">
+        <div class="table-row header">
+          <span>Name</span>
+          <span>Username</span>
+          <span>Role</span>
+          <span>Status</span>
+        </div>
+        {% for barber in barbers %}
+        <a class="table-row" href="/admin/barbers/{{ barber.id }}">
+          <span>{{ barber.display_name }}</span>
+          <span>{{ barber.username }}</span>
+          <span>{{ barber.role }}</span>
+          <span>{% if barber.active %}Active{% else %}Inactive{% endif %}</span>
+        </a>
+        {% endfor %}
+        {% if barbers.is_empty() %}
+        <p class="muted">No barbers yet.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Create barber</h2>
+      <form class="form" method="post" action="/admin/barbers">
+        <div class="field">
+          <label for="display_name">Display name</label>
+          <input id="display_name" name="display_name" type="text" required />
+        </div>
+        <div class="field">
+          <label for="username">Username</label>
+          <input id="username" name="username" type="text" required />
+        </div>
+        <div class="field">
+          <label for="password">Temp password</label>
+          <input id="password" name="password" type="password" required />
+        </div>
+        <button type="submit" class="btn primary">Add barber</button>
+      </form>
+    </div>
+  </div>
+</section>
+{% endblock %}

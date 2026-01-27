@@ -1,0 +1,49 @@
+{% extends "admin_base.html" %}
+
+{% block title %}Barber Dashboard — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+  <div class="admin-header">
+    <div>
+      <h1>{{ barber_name }}'s dashboard</h1>
+      <p class="muted">Your upcoming appointments and performance.</p>
+    </div>
+    <div class="admin-actions">
+      <a class="btn primary" href="/barber/appointments">View appointments</a>
+    </div>
+  </div>
+
+  <div class="stat-grid">
+    {% for stat in stats %}
+    <div class="stat-card">
+      <span class="label">{{ stat.label }}</span>
+      <strong>{{ stat.value }}</strong>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="card">
+    <h2>Upcoming appointments</h2>
+    <div class="table">
+      <div class="table-row header">
+        <span>Client</span>
+        <span>Service</span>
+        <span>Schedule</span>
+        <span>Status</span>
+      </div>
+      {% for appointment in upcoming %}
+      <div class="table-row">
+        <span>{{ appointment.client_name }}</span>
+        <span>{{ appointment.service }}</span>
+        <span>{{ appointment.scheduled_for }}</span>
+        <span class="status {{ appointment.status }}">{{ appointment.status }}</span>
+      </div>
+      {% endfor %}
+      {% if upcoming.is_empty() %}
+      <p class="muted">No upcoming appointments.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+{% endblock %}

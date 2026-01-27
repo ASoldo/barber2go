@@ -1,0 +1,26 @@
+{% extends "admin_base.html" %}
+
+{% block title %}CMS Editor — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="admin-section">
+  <div class="admin-header">
+    <div>
+      <h1>CMS editor</h1>
+      <p class="muted">Edit live blocks used across the public site.</p>
+    </div>
+  </div>
+
+  <div class="cms-grid">
+    {% for block in blocks %}
+    <editable-block data-key="{{ block.key }}" data-title="{{ block.title }}">
+      {{ block.html | safe }}
+    </editable-block>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/cms.js"></script>
+{% endblock %}

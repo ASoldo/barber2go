@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>{% block title %}Admin — Barber2Go{% endblock %}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/static/css/app.css" />
+  <link rel="stylesheet" href="/static/css/admin.css" />
+  {% block head %}{% endblock %}
+</head>
+<body class="admin-body">
+  <div class="admin-shell">
+    <aside class="admin-nav">
+      <div class="logo">Barber2Go</div>
+      <nav>
+        <a href="/admin/dashboard">Dashboard</a>
+        <a href="/admin/appointments">Appointments</a>
+        <a href="/admin/barbers">Barbers</a>
+        <a href="/admin/cms">CMS</a>
+        <a href="/barber/dashboard">Barber view</a>
+      </nav>
+      <div class="admin-nav-footer">
+        <p class="muted">Basic auth protected</p>
+      </div>
+    </aside>
+    <main class="admin-main">
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+
+  <script src="/static/js/admin.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

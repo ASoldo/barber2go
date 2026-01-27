@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Barber2Go — Mobile Barbering{% endblock %}
+
+{% block content %}
+<section class="hero">
+  <div class="container hero-grid">
+    <div class="hero-content" data-animate>
+      <div class="hero-copy">{{ hero_html | safe }}</div>
+      <div class="hero-actions">
+        <a class="btn primary" href="/book">Book a visit</a>
+        <a class="btn ghost" href="/barbers">Meet barbers</a>
+      </div>
+      <div class="hero-meta">
+        <div>
+          <span class="label">Service area</span>
+          <strong>Local neighborhoods, on demand</strong>
+        </div>
+        <div>
+          <span class="label">Turnaround</span>
+          <strong>Same-week appointments</strong>
+        </div>
+      </div>
+    </div>
+    <div class="hero-card" data-animate>
+      <div class="hero-card-inner">
+        <p class="eyebrow">Today’s flow</p>
+        <h3>Schedule overview</h3>
+        <ul>
+          <li>
+            <span>Client intake</span>
+            <strong>Instant confirmation</strong>
+          </li>
+          <li>
+            <span>Route planning</span>
+            <strong>Optimized by barber</strong>
+          </li>
+          <li>
+            <span>Visit status</span>
+            <strong>Live appointment updates</strong>
+          </li>
+        </ul>
+        <a href="/admin/dashboard" class="btn light">Admin dashboard</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container split">
+    <div class="card" data-animate>
+      {{ about_html | safe }}
+    </div>
+    <div class="card highlight" data-animate>
+      <h3>Why Barber2Go</h3>
+      <ul class="checklist">
+        <li>Appointments tracked in one place</li>
+        <li>Route-ready client addresses</li>
+        <li>Multiple barbers, one dashboard</li>
+        <li>Clean confirmations with status updates</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container">
+    <div class="section-head">
+      {{ services_html | safe }}
+    </div>
+    <div class="grid cards" data-stagger>
+      {% for service in services %}
+      <article class="service-card">
+        <h4>{{ service.name }}</h4>
+        <p class="muted">{{ service.duration }}</p>
+        <p>{{ service.description }}</p>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="section alt">
+  <div class="container">
+    <div class="section-head">
+      <h2>Meet the barbers</h2>
+      <p>Choose a specialist or go with the next available professional.</p>
+    </div>
+    <div class="grid barbers" data-stagger>
+      {% for barber in barbers %}
+      <article class="barber-card">
+        <div class="avatar">{{ barber.initials }}</div>
+        <div>
+          <h4>{{ barber.display_name }}</h4>
+          <p class="muted">Mobile barber</p>
+        </div>
+      </article>
+      {% endfor %}
+      {% if barbers.is_empty() %}
+      <p class="muted">No barbers listed yet. Add team members in the admin dashboard.</p>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+<section class="section cta-section">
+  <div class="container cta-card" data-animate>
+    <div>
+      <h2>Ready for a home visit?</h2>
+      <p>Submit a request and get confirmed fast. No payments required.</p>
+    </div>
+    <a class="btn primary" href="/book">Schedule now</a>
+  </div>
+</section>
+{% endblock %}

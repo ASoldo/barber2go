@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Book an Appointment — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container form-layout">
+    <div class="form-panel" data-animate>
+      <h1>Book a home visit</h1>
+      <p>Fill out the details and a barber will confirm your appointment.</p>
+
+      {% if !errors.is_empty() %}
+      <div class="alert">
+        <ul>
+          {% for error in errors %}
+          <li>{{ error }}</li>
+          {% endfor %}
+        </ul>
+      </div>
+      {% endif %}
+
+      <form method="post" action="/book" class="form">
+        <div class="field">
+          <label for="client_name">Full name</label>
+          <input id="client_name" name="client_name" type="text" value="{{ form.client_name }}" required />
+        </div>
+        <div class="field">
+          <label for="client_phone">Phone</label>
+          <input id="client_phone" name="client_phone" type="tel" value="{{ form.client_phone }}" required />
+        </div>
+        <div class="field">
+          <label for="client_email">Email (optional)</label>
+          <input id="client_email" name="client_email" type="email" value="{{ form.client_email }}" />
+        </div>
+        <div class="field">
+          <label for="address">Service address</label>
+          <input id="address" name="address" type="text" value="{{ form.address }}" required />
+        </div>
+        <div class="field">
+          <label for="service">Service</label>
+          <select id="service" name="service" required>
+            <option value="">Select a service</option>
+            {% for service in services %}
+            <option value="{{ service.name }}" {% if service.selected %}selected{% endif %}>
+              {{ service.name }} · {{ service.duration }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="scheduled_for">Preferred date & time</label>
+          <input id="scheduled_for" name="scheduled_for" type="datetime-local" value="{{ form.scheduled_for }}" required />
+        </div>
+        <div class="field">
+          <label for="preferred_barber_id">Preferred barber (optional)</label>
+          <select id="preferred_barber_id" name="preferred_barber_id">
+            <option value="">No preference</option>
+            {% for barber in barbers %}
+            <option value="{{ barber.id }}" {% if barber.selected %}selected{% endif %}>
+              {{ barber.display_name }}
+            </option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field">
+          <label for="notes">Notes (optional)</label>
+          <textarea id="notes" name="notes" rows="3">{{ form.notes }}</textarea>
+        </div>
+        <button type="submit" class="btn primary">Request appointment</button>
+      </form>
+    </div>
+
+    <aside class="side-panel" data-animate>
+      <div class="panel-card">
+        <h3>What happens next?</h3>
+        <ol>
+          <li>We review your request.</li>
+          <li>A barber confirms the appointment.</li>
+          <li>You receive a status update.</li>
+        </ol>
+      </div>
+      <div class="panel-card accent">
+        <h3>Need multiple bookings?</h3>
+        <p>Admins can manage appointments in the dashboard and assign barbers across your team.</p>
+        <a class="btn light" href="/admin/dashboard">Open admin</a>
+      </div>
+    </aside>
+  </div>
+</section>
+{% endblock %}
