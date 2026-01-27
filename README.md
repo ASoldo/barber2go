@@ -56,13 +56,25 @@ Open `/admin/cms` to edit live content blocks. Changes persist to the `cms_block
 ## Database
 SQLite database lives at `data/barber2go.db` by default. SQLx migrations run automatically on startup.
 
-## Vercel deployment note
-Vercel’s Rust runtime is designed for **serverless functions** under the `api/` directory rather than long‑running servers. This project is a full Actix server, so the recommended production setup is:
+## Fly.io deployment (recommended for SQLite)
+This repo includes a `Dockerfile` and `fly.toml` configured for SQLite on a Fly volume.
 
-1) Deploy the Actix server to a Rust-friendly host (Fly.io, Render, Railway, VPS, etc.).
-2) Use Vercel as a reverse proxy/front door with rewrites pointing to your backend origin.
+1) Create a volume (one-time):
+   ```bash
+   fly volumes create barber2go_data --size 1 --region iad
+   ```
 
-If you want a pure Vercel deployment, you’ll need to port the handlers to Vercel’s Rust `vercel_runtime` function model.
+2) Set secrets (recommended):
+   ```bash
+   fly secrets set ADMIN_USER=admin ADMIN_PASSWORD=admin
+   ```
+
+3) Deploy:
+   ```bash
+   fly deploy
+   ```
+
+The database will live at `/data/barber2go.db` inside the mounted volume.
 
 ## Scripts
 - `cargo run` — run locally
