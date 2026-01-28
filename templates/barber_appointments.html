@@ -2,6 +2,10 @@
 
 {% block title %}My Appointments — Barber2Go{% endblock %}
 
+{% block head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% endblock %}
+
 {% block content %}
 <section class="admin-section">
   <div class="admin-header">
@@ -14,24 +18,34 @@
     </div>
   </div>
 
-  <div class="stack">
+  <div class="card map-card">
+    <div class="map-header">
+      <div>
+        <h2>My route map</h2>
+        <p class="muted">See your upcoming visits on the map.</p>
+      </div>
+    </div>
+    <div id="barber-map" class="map admin-map"></div>
+  </div>
+
+  <div class="stack" data-barber-appointments data-barber-id="{{ barber_id }}">
     {% for appointment in appointments %}
-    <div class="card appointment-card">
+    <div id="appointment-{{ appointment.id }}" class="card appointment-card" data-appointment-id="{{ appointment.id }}" data-appointment-status="{{ appointment.status }}" data-appointment-url="#appointment-{{ appointment.id }}"{% if appointment.latitude.is_some() %} data-lat="{{ appointment.latitude.unwrap() }}"{% endif %}{% if appointment.longitude.is_some() %} data-lon="{{ appointment.longitude.unwrap() }}"{% endif %}>
       <div class="card-header">
         <div>
-          <h3>{{ appointment.client_name }}</h3>
-          <p class="muted">{{ appointment.service }} · {{ appointment.scheduled_for }}</p>
+          <h3 data-field="client_name">{{ appointment.client_name }}</h3>
+          <p class="muted"><span data-field="service">{{ appointment.service }}</span> · <span data-field="scheduled_for">{{ appointment.scheduled_for }}</span></p>
         </div>
-        <span class="status {{ appointment.status }}">{{ appointment.status }}</span>
+        <span class="status {{ appointment.status }}" data-field="status">{{ appointment.status }}</span>
       </div>
       <div class="card-body">
-        <p><strong>Address:</strong> {{ appointment.address }}</p>
-        <p><strong>Phone:</strong> {{ appointment.client_phone }}</p>
+        <p><strong>Address:</strong> <span data-field="address">{{ appointment.address }}</span></p>
+        <p><strong>Phone:</strong> <span data-field="client_phone">{{ appointment.client_phone }}</span></p>
         {% if appointment.has_email %}
-        <p><strong>Email:</strong> {{ appointment.client_email }}</p>
+        <p><strong>Email:</strong> <span data-field="client_email">{{ appointment.client_email }}</span></p>
         {% endif %}
         {% if appointment.has_notes %}
-        <p><strong>Notes:</strong> {{ appointment.notes }}</p>
+        <p><strong>Notes:</strong> <span data-field="notes">{{ appointment.notes }}</span></p>
         {% endif %}
       </div>
       <div class="card-actions">
@@ -51,8 +65,12 @@
     </div>
     {% endfor %}
     {% if appointments.is_empty() %}
-    <p class="muted">No appointments yet. Pending requests will appear here.</p>
+    <p class="muted" data-empty-state>No appointments yet. Pending requests will appear here.</p>
     {% endif %}
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 {% endblock %}

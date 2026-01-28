@@ -7,6 +7,9 @@ A server-rendered appointment scheduling platform for mobile barbers. Built with
 - Barber dashboard with appointment claiming and status updates
 - Super admin dashboard with activity log and team management
 - CMS editor for live content blocks (stored in SQLite)
+- PWA support with push notifications
+- Live schedule updates via SSE (no manual refresh)
+- Public status tracker page for clients (`/status/{id}`)
 - Basic auth (HTTP Basic) for admin + barber routes
 
 ## Stack
@@ -30,11 +33,16 @@ export BARBER_PASSWORD=barbersecret
 export BARBER_DISPLAY_NAME="Barber One"
 ```
 
+> Change `ADMIN_PASSWORD` before deploying to production.
+
 Optional:
 
 ```bash
 export DATABASE_URL="sqlite://./data/barber2go.db"
 export PORT=8080
+export VAPID_SUBJECT="mailto:admin@barber2go.local"
+export VAPID_PUBLIC_KEY="YOUR_VAPID_PUBLIC_KEY"
+export VAPID_PRIVATE_KEY="YOUR_VAPID_PRIVATE_KEY"
 ```
 
 ### 2) Run the app
@@ -53,6 +61,28 @@ Visit:
 ## CMS editing
 Open `/admin/cms` to edit live content blocks. Changes persist to the `cms_blocks` table and immediately update the public pages.
 
+## Realtime updates
+- Admin + barber pages subscribe to `/events` (SSE) for live updates (no refresh).
+- Clients can track updates on `/status/{id}` (SSE) or opt in to web push notifications.
+
+## Push notifications (web push)
+Push requires HTTPS + VAPID keys.
+
+Generate VAPID keys (one-time) using Node:
+```bash
+npx web-push generate-vapid-keys
+```
+
+Set these env vars (locally or in Fly secrets):
+```bash
+export VAPID_PUBLIC_KEY="..."
+export VAPID_PRIVATE_KEY="..."
+export VAPID_SUBJECT="mailto:admin@barber2go.local"
+```
+
+## Maps + address autocomplete
+The booking page uses OpenStreetMap (Nominatim) + Leaflet to suggest addresses and let users pin their location.
+
 ## Database
 SQLite database lives at `data/barber2go.db` by default. SQLx migrations run automatically on startup.
 
@@ -66,7 +96,7 @@ This repo includes a `Dockerfile` and `fly.toml` configured for SQLite on a Fly 
 
 2) Set secrets (recommended):
    ```bash
-   fly secrets set ADMIN_USER=admin ADMIN_PASSWORD=admin
+   fly secrets set ADMIN_USER=admin ADMIN_PASSWORD=admin VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=...
    ```
 
 3) Deploy:

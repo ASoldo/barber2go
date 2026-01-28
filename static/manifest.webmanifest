@@ -1,0 +1,16 @@
+{
+  "name": "Barber2Go",
+  "short_name": "Barber2Go",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f6efe4",
+  "theme_color": "#d77a2b",
+  "icons": [
+    {
+      "src": "/static/icons/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

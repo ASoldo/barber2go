@@ -2,17 +2,19 @@ mod auth;
 mod db;
 mod filters;
 mod models;
+mod push;
 mod routes;
 mod state;
 mod templates;
 
 use actix_files::Files;
 use actix_web::{middleware, web, App, HttpServer};
+use actix_web_httpauth::extractors::basic;
 use sqlx::sqlite::{SqliteConnectOptions, SqlitePoolOptions};
 use std::env;
 use std::str::FromStr;
 
-use crate::state::AppState;
+use crate::{auth::AUTH_REALM, state::{AppState, PushConfig}};
 
 #[actix_web::main]
 async fn main() -> std::io::Result<()> {
@@ -41,7 +43,18 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     db::run_migrations(&pool).await?;
     db::seed_defaults(&pool).await?;
 
-    let state = AppState { db: pool.clone() };
+    let (events, _) = tokio::sync::broadcast::channel(200);
+    let push = PushConfig {
+        public_key: env::var("VAPID_PUBLIC_KEY").unwrap_or_default(),
+        private_key: env::var("VAPID_PRIVATE_KEY").unwrap_or_default(),
+        subject: env::var("VAPID_SUBJECT").unwrap_or_else(|_| "mailto:admin@barber2go.local".to_string()),
+    };
+
+    let state = AppState {
+        db: pool.clone(),
+        events,
+        push,
+    };
 
     let port: u16 = env::var("PORT")
         .ok()
@@ -54,9 +67,11 @@ async fn run() -> Result<(), Box<dyn std::error::Error>> {
     HttpServer::new(move || {
         App::new()
             .app_data(web::Data::new(state.clone()))
+            .app_data(basic::Config::default().realm(AUTH_REALM))
             .wrap(middleware::Logger::default())
             .service(Files::new("/static", "./static").prefer_utf8(true))
             .configure(routes::public::configure)
+            .configure(routes::events::configure)
             .configure(routes::admin::configure)
             .configure(routes::barber::configure)
     })

@@ -5,7 +5,7 @@ use sqlx::SqlitePool;
 
 use crate::{
     auth::{hash_password, new_id},
-    models::{ROLE_ADMIN, ROLE_BARBER},
+    models::{AppointmentRow, ROLE_ADMIN, ROLE_BARBER},
 };
 
 pub async fn run_migrations(pool: &SqlitePool) -> Result<(), sqlx::migrate::MigrateError> {
@@ -63,6 +63,26 @@ pub async fn log_activity(
     .bind(appointment_id)
     .execute(pool)
     .await;
+}
+
+pub async fn fetch_appointment_event(
+    pool: &SqlitePool,
+    appointment_id: &str,
+) -> Option<AppointmentRow> {
+    sqlx::query_as::<_, AppointmentRow>(
+        r#"SELECT a.id, a.client_name, a.client_phone, a.client_email, a.address, a.service,
+                  a.notes, a.requested_at, a.scheduled_for, a.status, a.barber_id,
+                  a.latitude, a.longitude,
+                  u.display_name as barber_name
+           FROM appointments a
+           LEFT JOIN users u ON a.barber_id = u.id
+           WHERE a.id = ?
+           LIMIT 1"#,
+    )
+    .bind(appointment_id)
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None)
 }
 
 async fn seed_admin(pool: &SqlitePool) -> Result<(), sqlx::Error> {

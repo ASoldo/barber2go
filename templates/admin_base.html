@@ -9,18 +9,35 @@
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@400;600;700&family=Work+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/css/app.css" />
   <link rel="stylesheet" href="/static/css/admin.css" />
+  <link rel="manifest" href="/static/manifest.webmanifest" />
+  <link rel="icon" href="/static/icons/icon.svg" type="image/svg+xml" />
+  <meta name="theme-color" content="#d77a2b" />
   {% block head %}{% endblock %}
 </head>
 <body class="admin-body">
+  <header class="admin-topbar">
+    <a class="logo" href="/admin/dashboard">Barber2Go</a>
+    <button class="menu-button" type="button" data-admin-menu-open aria-label="Open admin menu">
+      <span></span>
+      <span></span>
+      <span></span>
+    </button>
+  </header>
   <div class="admin-shell">
     <aside class="admin-nav">
       <div class="logo">Barber2Go</div>
       <nav>
+        {% if is_admin %}
         <a href="/admin/dashboard">Dashboard</a>
         <a href="/admin/appointments">Appointments</a>
         <a href="/admin/barbers">Barbers</a>
         <a href="/admin/cms">CMS</a>
-        <a href="/barber/dashboard">Barber view</a>
+        <a class="logout-link" href="/logout">Log out</a>
+        {% else %}
+        <a href="/barber/dashboard">Dashboard</a>
+        <a href="/barber/appointments">Appointments</a>
+        <a class="logout-link" href="/logout">Log out</a>
+        {% endif %}
       </nav>
       <div class="admin-nav-footer">
         <p class="muted">Basic auth protected</p>
@@ -31,7 +48,28 @@
     </main>
   </div>
 
-  <script src="/static/js/admin.js"></script>
+  <dialog id="admin-menu" class="mobile-menu admin-menu">
+    <div class="mobile-menu-header">
+      <strong>Barber2Go</strong>
+      <button class="btn ghost" type="button" data-admin-menu-close>Close</button>
+    </div>
+    <nav class="mobile-menu-links">
+      {% if is_admin %}
+      <a href="/admin/dashboard">Dashboard</a>
+      <a href="/admin/appointments">Appointments</a>
+      <a href="/admin/barbers">Barbers</a>
+      <a href="/admin/cms">CMS</a>
+      <a class="logout-link" href="/logout">Log out</a>
+      {% else %}
+      <a href="/barber/dashboard">Dashboard</a>
+      <a href="/barber/appointments">Appointments</a>
+      <a class="logout-link" href="/logout">Log out</a>
+      {% endif %}
+    </nav>
+  </dialog>
+
+  <script src="/static/js/app.js"></script>
   {% block scripts %}{% endblock %}
+  <script src="/static/js/admin.js"></script>
 </body>
 </html>

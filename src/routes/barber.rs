@@ -1,15 +1,16 @@
-use actix_web::{http::header, web, HttpResponse, Result};
+use actix_web::{http::header, middleware::from_fn, web, HttpResponse, Result};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use askama::Template;
 use serde::Deserialize;
 
 use crate::{
-    auth::{basic_validator, AuthUser},
-    db::log_activity,
+    auth::{basic_validator, logout_guard, AuthUser},
+    db::{fetch_appointment_event, log_activity},
     models::{
         AppointmentRow, STATUS_ACCEPTED, STATUS_COMPLETED, STATUS_DECLINED, STATUS_PENDING,
     },
-    state::AppState,
+    push,
+    state::{AppState, ServerEvent},
     templates::render,
 };
 
@@ -26,6 +27,8 @@ struct AppointmentView {
     has_notes: bool,
     scheduled_for: String,
     status: String,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
 }
 
 #[derive(Clone, Debug)]
@@ -40,12 +43,15 @@ struct BarberDashboardTemplate {
     barber_name: String,
     stats: Vec<StatCard>,
     upcoming: Vec<AppointmentView>,
+    is_admin: bool,
 }
 
 #[derive(Template)]
 #[template(path = "barber_appointments.html")]
 struct BarberAppointmentsTemplate {
     appointments: Vec<AppointmentView>,
+    barber_id: String,
+    is_admin: bool,
 }
 
 #[derive(Deserialize)]
@@ -57,6 +63,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/barber")
             .wrap(HttpAuthentication::basic(basic_validator))
+            .wrap(from_fn(logout_guard))
             .service(web::resource("").route(web::get().to(index)))
             .service(web::resource("/").route(web::get().to(index)))
             .service(web::resource("/dashboard").route(web::get().to(dashboard)))
@@ -122,6 +129,7 @@ async fn dashboard(state: web::Data<AppState>, auth: web::ReqData<AuthUser>) -> 
     let rows = sqlx::query_as::<_, AppointmentRow>(
         r#"SELECT a.id, a.client_name, a.client_phone, a.client_email, a.address, a.service,
                   a.notes, a.requested_at, a.scheduled_for, a.status, a.barber_id,
+                  a.latitude, a.longitude,
                   NULL as barber_name
            FROM appointments a
            WHERE a.barber_id = ?
@@ -139,6 +147,7 @@ async fn dashboard(state: web::Data<AppState>, auth: web::ReqData<AuthUser>) -> 
         barber_name: auth.display_name.clone(),
         stats,
         upcoming,
+        is_admin: false,
     }))
 }
 
@@ -146,6 +155,7 @@ async fn list_appointments(state: web::Data<AppState>, auth: web::ReqData<AuthUs
     let rows = sqlx::query_as::<_, AppointmentRow>(
         r#"SELECT a.id, a.client_name, a.client_phone, a.client_email, a.address, a.service,
                   a.notes, a.requested_at, a.scheduled_for, a.status, a.barber_id,
+                  a.latitude, a.longitude,
                   NULL as barber_name
            FROM appointments a
            WHERE a.barber_id = ? OR (a.barber_id IS NULL AND a.status = ?)
@@ -159,7 +169,11 @@ async fn list_appointments(state: web::Data<AppState>, auth: web::ReqData<AuthUs
 
     let appointments = rows.into_iter().map(to_view).collect();
 
-    Ok(render(BarberAppointmentsTemplate { appointments }))
+    Ok(render(BarberAppointmentsTemplate {
+        appointments,
+        barber_id: auth.id.clone(),
+        is_admin: false,
+    }))
 }
 
 async fn update_status(
@@ -217,6 +231,22 @@ async fn update_status(
     )
     .await;
 
+    let status_url = format!("/status/{appointment_id}");
+    push::notify_appointment(
+        &state,
+        &appointment_id,
+        "Appointment updated",
+        &format!("Status changed to {}.", status),
+        Some(status_url.as_str()),
+    )
+    .await;
+
+    if let Some(row) = fetch_appointment_event(&state.db, &appointment_id).await {
+        let _ = state
+            .events
+            .send(ServerEvent::from_row("appointment_updated", row));
+    }
+
     Ok(HttpResponse::SeeOther()
         .append_header((header::LOCATION, "/barber/appointments"))
         .finish())
@@ -237,6 +267,8 @@ fn to_view(row: AppointmentRow) -> AppointmentView {
         has_notes: !notes.trim().is_empty(),
         scheduled_for: row.scheduled_for,
         status: row.status,
+        latitude: row.latitude,
+        longitude: row.longitude,
     }
 }
 

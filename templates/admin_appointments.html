@@ -2,6 +2,10 @@
 
 {% block title %}Appointments — Barber2Go{% endblock %}
 
+{% block head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+{% endblock %}
+
 {% block content %}
 <section class="admin-section">
   <div class="admin-header">
@@ -26,28 +30,82 @@
     <button type="submit" class="btn light">Filter</button>
   </form>
 
-  <div class="card">
-    <div class="table">
-      <div class="table-row header">
-        <span>Client</span>
-        <span>Service</span>
-        <span>Schedule</span>
-        <span>Barber</span>
-        <span>Status</span>
+  <div class="card map-card">
+    <div class="map-header">
+      <div>
+        <h2>Appointment map</h2>
+        <p class="muted">Hover to preview, click to open details.</p>
       </div>
+    </div>
+    <div id="admin-map" class="map admin-map"></div>
+  </div>
+
+  <div class="card">
+    <div class="stack-list" data-admin-appointments data-status-filter="{{ status_filter }}">
       {% for appointment in appointments %}
-      <a class="table-row" href="/admin/appointments/{{ appointment.id }}">
-        <span>{{ appointment.client_name }}</span>
-        <span>{{ appointment.service }}</span>
-        <span>{{ appointment.scheduled_for }}</span>
-        <span>{{ appointment.barber_name }}</span>
-        <span class="status {{ appointment.status }}">{{ appointment.status }}</span>
+      <a class="stack-card" href="/admin/appointments/{{ appointment.id }}" data-appointment-id="{{ appointment.id }}" data-appointment-status="{{ appointment.status }}" data-appointment-url="/admin/appointments/{{ appointment.id }}" data-appointment-address="{{ appointment.address }}"{% if appointment.latitude.is_some() %} data-lat="{{ appointment.latitude.unwrap() }}"{% endif %}{% if appointment.longitude.is_some() %} data-lon="{{ appointment.longitude.unwrap() }}"{% endif %}>
+        <div class="stack-field">
+          <span class="stack-label">
+            <svg class="stack-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="8" r="3.2"></circle>
+              <path d="M4 20c0-4 4-6 8-6s8 2 8 6"></path>
+            </svg>
+            Client
+          </span>
+          <span data-field="client_name">{{ appointment.client_name }}</span>
+        </div>
+        <div class="stack-field">
+          <span class="stack-label">
+            <svg class="stack-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="8" cy="8" r="2"></circle>
+              <circle cx="8" cy="16" r="2"></circle>
+              <path d="M10 9l10 6M10 15l10-6"></path>
+            </svg>
+            Service
+          </span>
+          <span data-field="service">{{ appointment.service }}</span>
+        </div>
+        <div class="stack-field">
+          <span class="stack-label">
+            <svg class="stack-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="4" y="6" width="16" height="14" rx="2"></rect>
+              <path d="M4 10h16M8 4v4M16 4v4"></path>
+            </svg>
+            Schedule
+          </span>
+          <span data-field="scheduled_for">{{ appointment.scheduled_for }}</span>
+        </div>
+        <div class="stack-field">
+          <span class="stack-label">
+            <svg class="stack-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="9" cy="8" r="3"></circle>
+              <path d="M2 20c0-4 4-6 7-6"></path>
+              <path d="M14 16l2 2 4-4"></path>
+            </svg>
+            Barber
+          </span>
+          <span data-field="barber_name">{{ appointment.barber_name }}</span>
+        </div>
+        <div class="stack-field status-field">
+          <span class="stack-label">
+            <svg class="stack-icon" viewBox="0 0 24 24" aria-hidden="true">
+              <circle cx="12" cy="12" r="9"></circle>
+              <path d="M8 12l3 3 5-5"></path>
+            </svg>
+            Status
+          </span>
+          <span class="status {{ appointment.status }}" data-field="status">{{ appointment.status }}</span>
+        </div>
       </a>
       {% endfor %}
       {% if appointments.is_empty() %}
-      <p class="muted">No appointments match this filter.</p>
+      <p class="muted" data-empty-state>No appointments match this filter.</p>
       {% endif %}
     </div>
   </div>
 </section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
 {% endblock %}

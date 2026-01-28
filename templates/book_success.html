@@ -2,17 +2,28 @@
 
 {% block title %}Appointment Requested — Barber2Go{% endblock %}
 
+{% block head %}
+  <meta name="vapid-public-key" content="{{ vapid_public_key }}" />
+{% endblock %}
+
 {% block content %}
 <section class="section">
   <div class="container confirmation" data-animate>
     <div class="card">
       <h1>You're booked for review</h1>
       <p>We received your request. A barber will confirm shortly.</p>
+      <p class="muted">If you enabled notifications, we'll send status updates to this device.</p>
       <div class="pill">Appointment ID: {{ appointment_id }}</div>
       <div class="actions">
+        <a class="btn light" href="/status/{{ appointment_id }}">View status page</a>
+        <button class="btn ghost notification-toggle" type="button" data-notification-toggle data-appointment-id="{{ appointment_id }}" data-subscribe-url="/status/{{ appointment_id }}/subscribe">
+          <span class="notif-indicator" data-notification-indicator></span>
+          <span data-notification-label>Enable notifications</span>
+        </button>
         <a class="btn primary" href="/">Back home</a>
         <a class="btn ghost" href="/book">Request another</a>
       </div>
+      <p class="muted notification-help" data-notification-helper></p>
     </div>
   </div>
 </section>

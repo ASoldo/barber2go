@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}Appointment Status — Barber2Go{% endblock %}
+
+{% block content %}
+<section class="section">
+  <div class="container status-wrapper"{% if found %} data-status-page data-appointment-id="{{ appointment_id }}"{% endif %}>
+    {% if found %}
+    <div class="card status-card">
+      <div class="status-header">
+        <div>
+          <h1>Appointment status</h1>
+          <p class="muted">Keep this page open to see live updates.</p>
+        </div>
+        <span class="status-pill status {{ status }}" data-field="status">{{ status }}</span>
+      </div>
+
+      <div class="status-grid">
+        <div>
+          <span class="label">Client</span>
+          <p data-field="client_name">{{ client_name }}</p>
+        </div>
+        <div>
+          <span class="label">Service</span>
+          <p data-field="service">{{ service }}</p>
+        </div>
+        <div>
+          <span class="label">Scheduled for</span>
+          <p data-field="scheduled_for">{{ scheduled_for }}</p>
+        </div>
+        <div>
+          <span class="label">Barber</span>
+          <p data-field="barber_name">{{ barber_name }}</p>
+        </div>
+        <div>
+          <span class="label">Appointment ID</span>
+          <p class="pill">{{ appointment_id }}</p>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="card status-card">
+      <h1>Appointment not found</h1>
+      <p>We couldn't find an appointment with that ID. Double-check your link or book a new visit.</p>
+      <div class="actions">
+        <a class="btn primary" href="/book">Book a visit</a>
+        <a class="btn ghost" href="/">Back home</a>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+  <script src="/static/js/status.js"></script>
+{% endblock %}

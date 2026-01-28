@@ -1,16 +1,17 @@
-use actix_web::{http::header, web, HttpResponse, Result};
+use actix_web::{http::header, middleware::from_fn, web, HttpResponse, Result};
 use actix_web_httpauth::middleware::HttpAuthentication;
 use askama::Template;
 use serde::Deserialize;
 
 use crate::{
-    auth::{admin_validator, hash_password, new_id, AuthUser},
-    db::log_activity,
+    auth::{admin_validator, hash_password, logout_guard, new_id, AuthUser},
+    db::{fetch_appointment_event, log_activity},
     models::{
         ActivityRow, AppointmentRow, CmsBlockRow, ServiceOption, UserRow, ROLE_ADMIN,
         ROLE_BARBER, STATUS_ACCEPTED, STATUS_COMPLETED, STATUS_DECLINED, STATUS_PENDING,
     },
-    state::AppState,
+    push,
+    state::{AppState, ServerEvent},
     templates::render,
 };
 
@@ -35,6 +36,8 @@ struct AppointmentView {
     status: String,
     barber_id: String,
     barber_name: String,
+    latitude: Option<f64>,
+    longitude: Option<f64>,
 }
 
 #[derive(Clone, Debug)]
@@ -60,6 +63,7 @@ struct AdminDashboardTemplate {
     stats: Vec<StatCard>,
     upcoming: Vec<AppointmentView>,
     activities: Vec<ActivityView>,
+    is_admin: bool,
 }
 
 #[derive(Template)]
@@ -67,6 +71,7 @@ struct AdminDashboardTemplate {
 struct AdminAppointmentsTemplate {
     appointments: Vec<AppointmentView>,
     status_filter: String,
+    is_admin: bool,
 }
 
 #[derive(Template)]
@@ -75,6 +80,7 @@ struct AdminAppointmentDetailTemplate {
     appointment: AppointmentView,
     barbers: Vec<BarberView>,
     statuses: Vec<StatusOption>,
+    is_admin: bool,
 }
 
 #[derive(Clone, Debug)]
@@ -90,6 +96,7 @@ struct AdminBarbersTemplate {
     errors: Vec<String>,
     success: String,
     has_success: bool,
+    is_admin: bool,
 }
 
 #[derive(Template)]
@@ -98,12 +105,14 @@ struct AdminBarberStatsTemplate {
     barber: BarberView,
     stats: Vec<StatCard>,
     recent: Vec<AppointmentView>,
+    is_admin: bool,
 }
 
 #[derive(Template)]
 #[template(path = "admin_cms.html")]
 struct AdminCmsTemplate {
     blocks: Vec<CmsBlockRow>,
+    is_admin: bool,
 }
 
 #[derive(Deserialize)]
@@ -135,6 +144,7 @@ pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/admin")
             .wrap(HttpAuthentication::basic(admin_validator))
+            .wrap(from_fn(logout_guard))
             .service(web::resource("").route(web::get().to(index)))
             .service(web::resource("/").route(web::get().to(index)))
             .service(web::resource("/dashboard").route(web::get().to(dashboard)))
@@ -200,6 +210,7 @@ async fn dashboard(state: web::Data<AppState>, auth: web::ReqData<AuthUser>) -> 
     let upcoming_rows = sqlx::query_as::<_, AppointmentRow>(
         r#"SELECT a.id, a.client_name, a.client_phone, a.client_email, a.address, a.service,
                   a.notes, a.requested_at, a.scheduled_for, a.status, a.barber_id,
+                  a.latitude, a.longitude,
                   u.display_name as barber_name
            FROM appointments a
            LEFT JOIN users u ON a.barber_id = u.id
@@ -232,6 +243,7 @@ async fn dashboard(state: web::Data<AppState>, auth: web::ReqData<AuthUser>) -> 
         stats,
         upcoming,
         activities,
+        is_admin: true,
     }))
 }
 
@@ -244,6 +256,7 @@ async fn list_appointments(
         sqlx::query_as::<_, AppointmentRow>(
             r#"SELECT a.id, a.client_name, a.client_phone, a.client_email, a.address, a.service,
                       a.notes, a.requested_at, a.scheduled_for, a.status, a.barber_id,
+                      a.latitude, a.longitude,
                       u.display_name as barber_name
                FROM appointments a
                LEFT JOIN users u ON a.barber_id = u.id
@@ -256,6 +269,7 @@ async fn list_appointments(
         sqlx::query_as::<_, AppointmentRow>(
             r#"SELECT a.id, a.client_name, a.client_phone, a.client_email, a.address, a.service,
                       a.notes, a.requested_at, a.scheduled_for, a.status, a.barber_id,
+                      a.latitude, a.longitude,
                       u.display_name as barber_name
                FROM appointments a
                LEFT JOIN users u ON a.barber_id = u.id
@@ -273,6 +287,7 @@ async fn list_appointments(
     Ok(render(AdminAppointmentsTemplate {
         appointments,
         status_filter,
+        is_admin: true,
     }))
 }
 
@@ -284,6 +299,7 @@ async fn appointment_detail(
     let row = sqlx::query_as::<_, AppointmentRow>(
         r#"SELECT a.id, a.client_name, a.client_phone, a.client_email, a.address, a.service,
                   a.notes, a.requested_at, a.scheduled_for, a.status, a.barber_id,
+                  a.latitude, a.longitude,
                   u.display_name as barber_name
            FROM appointments a
            LEFT JOIN users u ON a.barber_id = u.id
@@ -329,6 +345,7 @@ async fn appointment_detail(
         appointment,
         barbers,
         statuses,
+        is_admin: true,
     }))
 }
 
@@ -340,6 +357,7 @@ async fn update_appointment(
 ) -> Result<HttpResponse> {
     let appointment_id = path.into_inner();
     let form = form.into_inner();
+    let status = form.status.clone();
     let barber_id = form.barber_id.as_ref().and_then(|value| {
         if value.trim().is_empty() {
             None
@@ -388,6 +406,22 @@ async fn update_appointment(
     )
     .await;
 
+    let status_url = format!("/status/{appointment_id}");
+    push::notify_appointment(
+        &state,
+        &appointment_id,
+        "Appointment updated",
+        &format!("Status changed to {}.", status),
+        Some(status_url.as_str()),
+    )
+    .await;
+
+    if let Some(row) = fetch_appointment_event(&state.db, &appointment_id).await {
+        let _ = state
+            .events
+            .send(ServerEvent::from_row("appointment_updated", row));
+    }
+
     Ok(HttpResponse::SeeOther()
         .append_header((header::LOCATION, format!("/admin/appointments/{appointment_id}")))
         .finish())
@@ -400,6 +434,7 @@ async fn list_barbers(state: web::Data<AppState>) -> Result<HttpResponse> {
         errors: Vec::new(),
         success: String::new(),
         has_success: false,
+        is_admin: true,
     }))
 }
 
@@ -427,6 +462,7 @@ async fn create_barber(
             errors,
             success: String::new(),
             has_success: false,
+            is_admin: true,
         }));
     }
 
@@ -454,6 +490,7 @@ async fn create_barber(
             errors: vec![format!("Failed to create barber: {err}")],
             success: String::new(),
             has_success: false,
+            is_admin: true,
         }));
     }
 
@@ -472,6 +509,7 @@ async fn create_barber(
         errors: Vec::new(),
         success: "Barber created successfully.".to_string(),
         has_success: true,
+        is_admin: true,
     }))
 }
 
@@ -547,6 +585,7 @@ async fn barber_stats(
     let rows = sqlx::query_as::<_, AppointmentRow>(
         r#"SELECT a.id, a.client_name, a.client_phone, a.client_email, a.address, a.service,
                   a.notes, a.requested_at, a.scheduled_for, a.status, a.barber_id,
+                  a.latitude, a.longitude,
                   u.display_name as barber_name
            FROM appointments a
            LEFT JOIN users u ON a.barber_id = u.id
@@ -565,6 +604,7 @@ async fn barber_stats(
         barber,
         stats,
         recent,
+        is_admin: true,
     }))
 }
 
@@ -576,7 +616,7 @@ async fn cms_editor(state: web::Data<AppState>) -> Result<HttpResponse> {
     .await
     .unwrap_or_default();
 
-    Ok(render(AdminCmsTemplate { blocks }))
+    Ok(render(AdminCmsTemplate { blocks, is_admin: true }))
 }
 
 async fn save_cms(
@@ -651,6 +691,8 @@ fn to_view(row: AppointmentRow) -> AppointmentView {
         status: row.status,
         barber_id: row.barber_id.unwrap_or_default(),
         barber_name: row.barber_name.unwrap_or_else(|| "Unassigned".to_string()),
+        latitude: row.latitude,
+        longitude: row.longitude,
     }
 }
 

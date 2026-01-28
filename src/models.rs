@@ -35,6 +35,8 @@ pub struct AppointmentRow {
     pub status: String,
     pub barber_id: Option<String>,
     pub barber_name: Option<String>,
+    pub latitude: Option<f64>,
+    pub longitude: Option<f64>,
 }
 
 #[derive(Debug, Clone, sqlx::FromRow)]
