@@ -4,7 +4,7 @@ use askama::Template;
 use serde::Deserialize;
 
 use crate::{
-    auth::{basic_validator, logout_guard, AuthUser},
+    auth::{barber_validator, logout_guard, AuthUser},
     db::{fetch_appointment_event, log_activity},
     models::{
         AppointmentRow, STATUS_ACCEPTED, STATUS_COMPLETED, STATUS_DECLINED, STATUS_PENDING,
@@ -62,7 +62,7 @@ struct AppointmentStatusForm {
 pub fn configure(cfg: &mut web::ServiceConfig) {
     cfg.service(
         web::scope("/barber")
-            .wrap(HttpAuthentication::basic(basic_validator))
+            .wrap(HttpAuthentication::basic(barber_validator))
             .wrap(from_fn(logout_guard))
             .service(web::resource("").route(web::get().to(index)))
             .service(web::resource("/").route(web::get().to(index)))

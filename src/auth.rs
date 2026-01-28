@@ -15,7 +15,7 @@ use argon2::{
 use rand_core::OsRng;
 use uuid::Uuid;
 
-use crate::{models::ROLE_ADMIN, models::UserRow, state::AppState};
+use crate::{models::{ROLE_ADMIN, ROLE_BARBER}, models::UserRow, state::AppState};
 
 pub const AUTH_REALM: &str = "Barber2Go";
 const LOGOUT_COOKIE: &str = "b2g_logged_out";
@@ -109,6 +109,22 @@ pub async fn admin_validator(
         Ok(user) => {
             if user.role != ROLE_ADMIN {
                 return Err((ErrorUnauthorized("Admin access required"), req));
+            }
+            req.extensions_mut().insert(user);
+            Ok(req)
+        }
+        Err(err) => Err((err, req)),
+    }
+}
+
+pub async fn barber_validator(
+    req: ServiceRequest,
+    credentials: BasicAuth,
+) -> Result<ServiceRequest, (Error, ServiceRequest)> {
+    match authenticate(&req, &credentials).await {
+        Ok(user) => {
+            if user.role != ROLE_BARBER {
+                return Err((ErrorUnauthorized("Barber access required"), req));
             }
             req.extensions_mut().insert(user);
             Ok(req)
