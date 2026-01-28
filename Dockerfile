@@ -14,7 +14,7 @@ COPY migrations ./migrations
 
 RUN cargo build --release
 
-FROM debian:bookworm-slim
+FROM debian:trixie-slim
 
 WORKDIR /app
 
