@@ -87,24 +87,51 @@ The booking page uses OpenStreetMap (Nominatim) + Leaflet to suggest addresses a
 SQLite database lives at `data/barber2go.db` by default. SQLx migrations run automatically on startup.
 
 ## Fly.io deployment (recommended for SQLite)
-This repo includes a `Dockerfile` and `fly.toml` configured for SQLite on a Fly volume.
+This repo includes a `Dockerfile` and `fly.toml` configured for SQLite on a Fly volume. The volume
+mount is defined as:
 
-1) Create a volume (one-time):
-   ```bash
-   fly volumes create barber2go_data --size 1 --region iad
-   ```
+```toml
+[mounts]
+source = "data"
+destination = "/data"
+```
 
-2) Set secrets (recommended):
-   ```bash
-   fly secrets set ADMIN_USER=admin ADMIN_PASSWORD=admin VAPID_PUBLIC_KEY=... VAPID_PRIVATE_KEY=... VAPID_SUBJECT=...
-   ```
+### 1) Create the volume (one-time)
+```bash
+flyctl volumes create data --app barber2go --region iad --size 1
+```
 
-3) Deploy:
-   ```bash
-   fly deploy
-   ```
+### 2) Set secrets
+```bash
+flyctl secrets set \
+  ADMIN_USER=admin \
+  ADMIN_PASSWORD=admin \
+  VAPID_PUBLIC_KEY="..." \
+  VAPID_PRIVATE_KEY="..." \
+  VAPID_SUBJECT="mailto:admin@barber2go.local" \
+  DATABASE_URL="sqlite:///data/barber2go.db" \
+  --app barber2go
+```
 
-The database will live at `/data/barber2go.db` inside the mounted volume.
+### 3) Deploy (run from repo root so fly.toml is picked up)
+```bash
+flyctl deploy --app barber2go
+```
+
+### 4) SQLite requires a single machine
+Run one machine (one volume). SQLite does not replicate across machines.
+```bash
+flyctl scale count 1 --app barber2go
+```
+
+### Useful checks
+```bash
+flyctl status --app barber2go
+flyctl logs --app barber2go
+flyctl volumes list --app barber2go
+```
+
+The database lives at `/data/barber2go.db` inside the mounted volume.
 
 ## Scripts
 - `cargo run` — run locally
