@@ -3,7 +3,7 @@ FROM rust:1.93-slim AS builder
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libsqlite3-dev pkg-config ca-certificates \
+    && apt-get install -y --no-install-recommends libsqlite3-dev libssl-dev pkg-config ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY Cargo.toml Cargo.lock ./
@@ -19,7 +19,7 @@ FROM debian:bookworm-slim
 WORKDIR /app
 
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libsqlite3-0 ca-certificates \
+    && apt-get install -y --no-install-recommends libsqlite3-0 libssl3 ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=builder /app/target/release/barber2go /app/barber2go
